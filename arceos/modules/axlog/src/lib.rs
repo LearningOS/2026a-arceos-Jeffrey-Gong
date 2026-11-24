@@ -88,7 +88,7 @@ macro_rules! with_color {
 
 #[repr(u8)]
 #[allow(dead_code)]
-enum ColorCode {
+pub enum ColorCode {
     Black = 30,
     Red = 31,
     Green = 32,
@@ -236,6 +236,10 @@ pub fn print_fmt(args: fmt::Arguments) -> fmt::Result {
 #[doc(hidden)]
 pub fn __print_impl(args: fmt::Arguments) {
     print_fmt(args).unwrap();
+}
+
+pub fn __print_colored(color: ColorCode, content: &str) {
+    print_fmt(with_color!(color, "{content}")).unwrap();
 }
 
 /// Initializes the logger.
