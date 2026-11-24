@@ -2,7 +2,7 @@
   "schema": 1,
   "courseId": 2078,
   "repository": "LearningOS/2026a-arceos-Jeffrey-Gong",
-  "commit": "b9f42327eb1cca2a3c02936dd5fcd020f595011f",
+  "commit": "f5c42d51de2ea8b6827658aad90157786cbfc565",
   "score": 100,
   "totalScore": 600,
   "exercises": [
@@ -50,9 +50,9 @@
     }
   ],
   "student": "Jeffrey-Gong",
-  "runId": "45346442496",
+  "runId": "45347866123",
   "runAttempt": "1",
   "upload": {
-    "status": "accepted"
+    "status": "pending"
   }
 }
