@@ -1,5 +1,7 @@
 #![no_std]
 
+use core::ptr::NonNull;
+
 use allocator::{BaseAllocator, ByteAllocator, PageAllocator};
 
 /// Early memory allocator
@@ -16,21 +18,27 @@ use allocator::{BaseAllocator, ByteAllocator, PageAllocator};
 /// When it goes down to ZERO, free bytes-used area.
 /// For pages area, it will never be freed!
 ///
-pub struct EarlyAllocator<const SIZE: usize> {}
+pub struct EarlyAllocator<const SIZE: usize> {
+    start: usize, end: usize,
+    b_pos: usize, p_pos: usize,
+}
 
 impl<const SIZE: usize> EarlyAllocator<SIZE> {
     pub const fn new() -> Self {
-        Self {}
+        Self {start: 0, end: 0, b_pos: 0, p_pos: 0}
     }
 }
 
 impl<const SIZE: usize> BaseAllocator for EarlyAllocator<SIZE> {
     fn init(&mut self, start: usize, size: usize) {
-        todo!()
+        self.start = start;
+        self.end = start + size;
+        self.b_pos = self.start;
+        self.p_pos = self.end;
     }
 
-    fn add_memory(&mut self, start: usize, size: usize) -> allocator::AllocResult {
-        todo!()
+    fn add_memory(&mut self, _start: usize, _size: usize) -> allocator::AllocResult {
+        unimplemented!()
     }
 }
 
@@ -39,23 +47,29 @@ impl<const SIZE: usize> ByteAllocator for EarlyAllocator<SIZE> {
         &mut self,
         layout: core::alloc::Layout,
     ) -> allocator::AllocResult<core::ptr::NonNull<u8>> {
-        todo!()
+        if self.b_pos + layout.size() <= self.p_pos {
+            let pos = self.b_pos;
+            self.b_pos += layout.size();
+            let ptr = unsafe {NonNull::new_unchecked(pos as *mut _)};
+            Ok(ptr)
+        }
+        else {
+            Err(allocator::AllocError::NoMemory)
+        }
     }
 
-    fn dealloc(&mut self, pos: core::ptr::NonNull<u8>, layout: core::alloc::Layout) {
-        todo!()
-    }
+    fn dealloc(&mut self, _pos: core::ptr::NonNull<u8>, _layout: core::alloc::Layout) {}
 
     fn total_bytes(&self) -> usize {
-        todo!()
+        self.p_pos - self.start
     }
 
     fn used_bytes(&self) -> usize {
-        todo!()
+        self.b_pos - self.start
     }
 
     fn available_bytes(&self) -> usize {
-        todo!()
+        self.total_bytes() - self.used_bytes()
     }
 }
 
@@ -67,22 +81,27 @@ impl<const SIZE: usize> PageAllocator for EarlyAllocator<SIZE> {
         num_pages: usize,
         align_pow2: usize,
     ) -> allocator::AllocResult<usize> {
-        todo!()
+        let sz = num_pages * SIZE;
+        if self.p_pos - sz >= self.b_pos {
+            self.p_pos -= sz;
+            Ok(self.p_pos)
+        }
+        else {
+            Err(allocator::AllocError::NoMemory)
+        }
     }
 
-    fn dealloc_pages(&mut self, pos: usize, num_pages: usize) {
-        todo!()
-    }
+    fn dealloc_pages(&mut self, _pos: usize, _num_pages: usize) {}
 
     fn total_pages(&self) -> usize {
-        todo!()
+        (self.end - self.b_pos) / SIZE
     }
 
     fn used_pages(&self) -> usize {
-        todo!()
+        (self.end - self.p_pos) / SIZE
     }
 
     fn available_pages(&self) -> usize {
-        todo!()
+        self.total_pages() - self.used_pages()
     }
 }
