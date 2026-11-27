@@ -28,6 +28,7 @@ use axhal::mem::PhysAddr;
 use crate::regs::GprIndex::{A0, A1};
 
 const VM_ENTRY: usize = 0x8020_0000;
+const VM_HART_ID: usize = 0x1234;
 
 #[cfg_attr(feature = "axstd", no_mangle)]
 fn main() {
@@ -102,8 +103,12 @@ fn vmexit_handler(ctx: &mut VmCpuRegisters) -> bool {
             }
         },
         Trap::Exception(Exception::IllegalInstruction) => {
+            let instruction = stval::read();
+            if emulate_mhartid(ctx, instruction) {
+                return false;
+            }
             panic!("Bad instruction: {:#x} sepc: {:#x}",
-                stval::read(),
+                instruction,
                 ctx.guest_regs.sepc
             );
         },
@@ -123,6 +128,27 @@ fn vmexit_handler(ctx: &mut VmCpuRegisters) -> bool {
         }
     }
     false
+}
+
+fn emulate_mhartid(ctx: &mut VmCpuRegisters, instruction: usize) -> bool {
+    const CSR_MHARTID: usize = 0xf14;
+    const OP_SYSTEM: usize = 0x73;
+    const FUNCT3_CSRRS: usize = 0b010;
+
+    let opcode = instruction & 0x7f;
+    let funct3 = (instruction >> 12) & 0x7;
+    let rs1 = (instruction >> 15) & 0x1f;
+    let csr = (instruction >> 20) & 0xfff;
+    if opcode != OP_SYSTEM || funct3 != FUNCT3_CSRRS || rs1 != 0 || csr != CSR_MHARTID {
+        return false;
+    }
+
+    let rd = ((instruction >> 7) & 0x1f) as u32;
+    if let Some(reg) = crate::regs::GprIndex::from_raw(rd) {
+        ctx.guest_regs.gprs.set_reg(reg, VM_HART_ID);
+    }
+    ctx.guest_regs.sepc = ctx.guest_regs.sepc.wrapping_add(4);
+    true
 }
 
 fn prepare_guest_context(ctx: &mut VmCpuRegisters) {
