@@ -2,8 +2,8 @@
   "schema": 1,
   "courseId": 2078,
   "repository": "LearningOS/2026a-arceos-Jeffrey-Gong",
-  "commit": "ee0b2c4dec47f1d433e348f86f877fc9e3a1054c",
-  "score": 500,
+  "commit": "34d9e6fc1031854b1b041479beffa73dc1e11296",
+  "score": 600,
   "totalScore": 600,
   "exercises": [
     {
@@ -16,8 +16,8 @@
     {
       "name": "ramfs_rename",
       "max": 100,
-      "score": 0,
-      "status": "fail",
+      "score": 100,
+      "status": "pass",
       "exitCode": 0
     },
     {
@@ -50,9 +50,9 @@
     }
   ],
   "student": "Jeffrey-Gong",
-  "runId": "45997696593",
+  "runId": "46009369724",
   "runAttempt": "1",
   "upload": {
-    "status": "accepted"
+    "status": "pending"
   }
 }
